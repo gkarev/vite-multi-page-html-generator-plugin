@@ -1,0 +1,26 @@
+# Test files
+test-temp/
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.md
+!README.md

@@ -16,16 +16,18 @@
     "vite-multi-page-html-generator-plugin.js",
     "vite-multi-page-html-generator-plugin.d.ts",
     "README.md",
-    "LICENSE",
-    "CHANGELOG.md"
+    "LICENSE"
   ],
   "scripts": {
-    "prepublishOnly": "npm test",
-    "test": "echo \"No tests specified\""
+    "prepublishOnly": "npm test"
   },
   "keywords": [
     "vite",
+    "vite-html-generator",
+    "vite-html-build",
+    "vite-html",
     "vite-plugin",
+    "vite-multi-page",
     "multi-page",
     "html",
     "entry-points",

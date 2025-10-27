@@ -12,7 +12,7 @@
 - 🎯 **TypeScript Support** - Full TypeScript definitions included
 - 📦 **Zero Dependencies** - No external dependencies required
 - 🚀 **Performance** - Optimized for fast builds
-- ♻️ **Backward Compatible** - Smooth migration from old option names
+- 🔒 **Safe Configuration** - Preserves existing rollupOptions without overwriting
 
 ## 📦 Installation
 
@@ -69,6 +69,8 @@ dist/
 
 Each HTML file becomes a separate static page. If all pages reference the same JavaScript file, they will share a single bundle.
 
+**Note:** The plugin safely merges with existing `rollupOptions`, preserving your custom configuration.
+
 ### Custom Configuration
 
 ```javascript
@@ -76,8 +78,8 @@ export default defineConfig({
   plugins: [
     multiPageHtml({
       htmlRoot: 'src/pages',
-      exclude: ['template.html'],
-      formatEntryName: (name) => `page-${name}`
+      exclude: ['template.html', /test/i],  // Supports strings and RegExp
+      entryNameFormatter: (name, file) => `page-${name}`
     })
   ]
 });
@@ -88,8 +90,8 @@ export default defineConfig({
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `htmlRoot` | `string` | `undefined` | Custom folder to search for HTML files |
-| `exclude` | `string[]` | `[]` | Files to exclude from entry points |
-| `formatEntryName` | `Function` | `undefined` | Custom function to format entry names |
+| `exclude` | `(string\|RegExp)[]` | `[]` | Files to exclude (supports RegExp patterns) |
+| `entryNameFormatter` | `Function` | `undefined` | Custom function to format entry names |
 
 ## 🤝 Integration with vite-svg-sprite-generator-plugin
 
@@ -113,10 +115,6 @@ export default defineConfig({
 ```
 
 This combination creates a fully static multi-page website with optimized SVG icons. Each page can share the same bundle or use page-specific bundles depending on your setup.
-
-## 📝 Changelog
-
-See [CHANGELOG.md](./CHANGELOG.md) for details.
 
 ## 📄 License
 

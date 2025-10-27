@@ -20,13 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modular architecture with separate functions
 - `configResolved` hook for early validation
 - Comprehensive error handling
-- JSDoc documentation
+- Integration with vite-svg-sprite-generator-plugin
 
 ### Features
 
 - Automatic HTML file discovery
 - Flexible configuration
 - Zero external dependencies
-- Production-ready quality (99/100)
 - Full Vite API compliance
+- Works with shared or page-specific bundles
 

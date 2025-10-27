@@ -8,6 +8,7 @@ export default function viteMultiPageHtmlGeneratorPlugin(options = {}) {
   
   return {
     name: 'vite-multi-page-html-generator',
+    apply: 'build',
     configResolved(config) {
       const root = htmlRootDir ? resolve(process.cwd(), htmlRootDir) : (config.root || process.cwd());
       if (!fs.existsSync(root)) {

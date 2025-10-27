@@ -63,13 +63,11 @@ dist/
 ├── about.html              ← Compiled additional page
 ├── contact.html            ← Compiled additional page
 └── assets/
-    ├── index-[hash].js     ← Page-specific bundles
-    ├── about-[hash].js
-    ├── contact-[hash].js
-    └── styles-[hash].css
+    ├── main-[hash].js      ← Shared bundle (if all pages use the same JS)
+    └── styles-[hash].css   ← Shared styles
 ```
 
-Each HTML file becomes a separate static page with its own JavaScript and CSS bundles.
+Each HTML file becomes a separate static page. If all pages reference the same JavaScript file, they will share a single bundle.
 
 ### Custom Configuration
 
@@ -114,7 +112,7 @@ export default defineConfig({
 });
 ```
 
-This combination creates a fully static multi-page website with optimized SVG icons and separate bundles for each page.
+This combination creates a fully static multi-page website with optimized SVG icons. Each page can share the same bundle or use page-specific bundles depending on your setup.
 
 ## 📝 Changelog
 

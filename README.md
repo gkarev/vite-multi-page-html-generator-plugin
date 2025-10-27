@@ -38,6 +38,39 @@ export default defineConfig({
 
 This will automatically find all `.html` files in the project root and create entry points for each one.
 
+### Project Structure
+
+```
+project/
+├── src/
+│   ├── index.html          ← Main page
+│   ├── about.html          ← Additional page
+│   ├── contact.html        ← Additional page
+│   └── assets/
+│       ├── styles.css
+│       └── main.js
+├── package.json
+└── vite.config.js
+```
+
+### Build Output
+
+The plugin generates a **multi-page static website** during build:
+
+```
+dist/
+├── index.html              ← Compiled main page
+├── about.html              ← Compiled additional page
+├── contact.html            ← Compiled additional page
+└── assets/
+    ├── index-[hash].js     ← Page-specific bundles
+    ├── about-[hash].js
+    ├── contact-[hash].js
+    └── styles-[hash].css
+```
+
+Each HTML file becomes a separate static page with its own JavaScript and CSS bundles.
+
 ### Custom Configuration
 
 ```javascript
@@ -59,6 +92,29 @@ export default defineConfig({
 | `htmlRoot` | `string` | `undefined` | Custom folder to search for HTML files |
 | `exclude` | `string[]` | `[]` | Files to exclude from entry points |
 | `formatEntryName` | `Function` | `undefined` | Custom function to format entry names |
+
+## 🤝 Integration with vite-svg-sprite-generator-plugin
+
+This plugin works perfectly with [vite-svg-sprite-generator-plugin](https://www.npmjs.com/package/vite-svg-sprite-generator-plugin) for building static multi-page sites with SVG icons:
+
+```javascript
+// vite.config.js
+import { defineConfig } from 'vite';
+import svgSprite from 'vite-svg-sprite-generator-plugin';
+import multiPageHtml from 'vite-multi-page-html-generator-plugin';
+
+export default defineConfig({
+  plugins: [
+    multiPageHtml(),  // Generate multiple pages
+    svgSprite({
+      iconsFolder: 'src/icons',
+      optimize: true
+    })
+  ]
+});
+```
+
+This combination creates a fully static multi-page website with optimized SVG icons and separate bundles for each page.
 
 ## 📝 Changelog
 

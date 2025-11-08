@@ -1,5 +1,5 @@
-import { resolve } from 'path';
-import fs from 'fs';
+import { resolve, relative, isAbsolute } from 'path';
+import { access, readdir } from 'fs/promises';
 
 /**
  * Vite plugin for multi-page applications that automatically discovers HTML files
@@ -9,33 +9,40 @@ import fs from 'fs';
  * @param {(string|RegExp)[]} options.exclude - Patterns to exclude
  * @param {Function} options.entryNameFormatter - Function to format entry names
  * @param {string} options.htmlRoot - Root directory containing HTML files
+ * @param {boolean} options.verbose - Enable verbose logging
  * @returns {Object} Vite plugin
  */
 export default function viteMultiPageHtmlGeneratorPlugin(options = {}) {
-  const { exclude = [], entryNameFormatter, htmlRoot } = options;
+  const { exclude = [], entryNameFormatter, htmlRoot, verbose = false } = options;
+  
+  /**
+   * Логирование с учетом verbose режима
+   */
+  function log(message) {
+    if (verbose) {
+      console.log(message);
+    }
+  }
   
   function getRoot(config) {
-    if (htmlRoot) {
-      // Use config.root as base path (critical fix)
-      return resolve(config.root || process.cwd(), htmlRoot);
-    }
-    return config.root || process.cwd();
+    const projectRoot = config.root || process.cwd();
+    return validateHtmlRoot(htmlRoot, projectRoot);
   }
   
   return {
     name: 'vite-multi-page-html-generator',
     apply: 'build',
     
-    config(config) {
+    async config(config) {
       const root = getRoot(config);
-      const entries = discoverHtmlFiles(root, { exclude, entryNameFormatter });
+      const entries = await discoverHtmlFiles(root, { exclude, entryNameFormatter, verbose });
       
       if (!entries || Object.keys(entries).length === 0) {
-        console.log('[vite-multi-page-html-generator] No HTML entries found');
+        log('[vite-multi-page-html-generator] No HTML entries found');
         return {};
       }
       
-      console.log(`[vite-multi-page-html-generator] Found ${Object.keys(entries).length} HTML entries: ${Object.keys(entries).join(', ')}`);
+      log(`[vite-multi-page-html-generator] Found ${Object.keys(entries).length} HTML entries: ${Object.keys(entries).join(', ')}`);
       
       // Preserve existing rollupOptions to avoid overwriting user's configuration
       return {
@@ -50,15 +57,56 @@ export default function viteMultiPageHtmlGeneratorPlugin(options = {}) {
   };
 }
 
-function validateRoot(root) {
-  if (!root || typeof root !== 'string') return { valid: false, error: 'Invalid root directory: ' + root };
-  if (!fs.existsSync(root)) return { valid: false, error: 'Root directory does not exist: ' + root };
-  return { valid: true };
+/**
+ * Валидация htmlRoot против path traversal атак
+ * @param {string|undefined} userPath - Путь от пользователя
+ * @param {string} projectRoot - Корень проекта
+ * @returns {string} Валидированный абсолютный путь
+ */
+function validateHtmlRoot(userPath, projectRoot) {
+  if (!userPath) return projectRoot;
+  
+  const absolutePath = resolve(projectRoot, userPath);
+  const relativePath = relative(projectRoot, absolutePath);
+  
+  if (relativePath.startsWith('..') || isAbsolute(relativePath)) {
+    throw new Error(
+      `❌ Security: htmlRoot "${userPath}" is outside project root\n\n` +
+      `   Project root: ${projectRoot}\n` +
+      `   Attempted path: ${absolutePath}\n\n` +
+      `   ⚠️  The path points outside the project root directory.\n` +
+      `   This is not allowed for security reasons (path traversal prevention).\n\n` +
+      `   ✅ Valid path examples:\n` +
+      `      - 'src/pages'           → relative to project root\n` +
+      `      - 'public'              → relative to project root\n` +
+      `      - './templates'         → explicit relative path\n\n` +
+      `   ❌ Invalid path examples:\n` +
+      `      - '../other-project'    → outside project (path traversal)\n` +
+      `      - '../../etc'           → system directory access attempt\n` +
+      `      - '/absolute/path'      → absolute paths not allowed\n\n` +
+      `   💡 Tip: All paths must be inside your project directory.`
+    );
+  }
+  
+  return absolutePath;
 }
 
-function readDirectoryFiles(root) {
+async function validateRoot(root) {
+  if (!root || typeof root !== 'string') {
+    return { valid: false, error: 'Invalid root directory: ' + root };
+  }
+  
   try {
-    const files = fs.readdirSync(root);
+    await access(root);
+    return { valid: true };
+  } catch (error) {
+    return { valid: false, error: 'Root directory does not exist: ' + root };
+  }
+}
+
+async function readDirectoryFiles(root) {
+  try {
+    const files = await readdir(root);
     return Array.isArray(files) ? files : [];
   } catch (error) {
     console.error('[vite-multi-page-html-generator] Error reading directory:', error.message);
@@ -86,7 +134,7 @@ function filterHtmlFiles(files, exclude = []) {
   );
 }
 
-function createEntryMapping(htmlFiles, root, entryNameFormatter) {
+function createEntryMapping(htmlFiles, root, entryNameFormatter, verbose = false) {
   const entries = {};
   
   htmlFiles.sort().forEach(file => {
@@ -108,6 +156,10 @@ function createEntryMapping(htmlFiles, root, entryNameFormatter) {
       }
       
       entries[name] = resolve(root, file);
+      
+      if (verbose) {
+        console.log(`   ✓ ${name} → ${file}`);
+      }
     } catch (error) {
       console.error(`[vite-multi-page-html-generator] Error processing file ${file}:`, error.message);
     }
@@ -116,23 +168,27 @@ function createEntryMapping(htmlFiles, root, entryNameFormatter) {
   return entries;
 }
 
-function discoverHtmlFiles(root, options = {}) {
-  const { exclude = [], entryNameFormatter } = options;
+async function discoverHtmlFiles(root, options = {}) {
+  const { exclude = [], entryNameFormatter, verbose = false } = options;
   
-  const validation = validateRoot(root);
+  const validation = await validateRoot(root);
   if (!validation.valid) {
     console.warn('[vite-multi-page-html-generator]', validation.error);
     return null;
   }
   
   try {
-    const files = readDirectoryFiles(root);
+    const files = await readDirectoryFiles(root);
     if (files.length === 0) return null;
     
     const htmlFiles = filterHtmlFiles(files, exclude);
     if (htmlFiles.length === 0) return null;
     
-    return createEntryMapping(htmlFiles, root, entryNameFormatter);
+    if (verbose) {
+      console.log(`\n[vite-multi-page-html-generator] Found ${htmlFiles.length} HTML files:`);
+    }
+    
+    return createEntryMapping(htmlFiles, root, entryNameFormatter, verbose);
   } catch (error) {
     console.error('[vite-multi-page-html-generator] Error discovering files:', error.message);
     return null;

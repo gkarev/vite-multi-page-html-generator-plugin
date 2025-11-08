@@ -1,0 +1,28 @@
+# Тестовые файлы
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+
+# Файлы для разработки
+.git
+.gitignore
+.npmignore
+node_modules
+*.log
+.DS_Store
+Thumbs.db
+
+# Конфигурационные файлы IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Исключить документацию разработки
+*.md
+!README.md
+!CHANGELOG.md
+

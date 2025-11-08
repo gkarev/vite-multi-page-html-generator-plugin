@@ -10,6 +10,8 @@ export interface MultiPageHtmlGeneratorOptions {
   entryNameFormatter?: (name: string, file: string) => string;
   /** Root directory containing HTML files */
   htmlRoot?: string;
+  /** Enable verbose logging (default: false) */
+  verbose?: boolean;
 }
 
 /**

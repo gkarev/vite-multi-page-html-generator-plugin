@@ -1,6 +1,6 @@
 {
   "name": "vite-multi-page-html-generator-plugin",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Vite plugin for automatic multi-page HTML entry point generation with configurable options",
   "main": "vite-multi-page-html-generator-plugin.js",
   "module": "vite-multi-page-html-generator-plugin.js",
